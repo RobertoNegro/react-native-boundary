@@ -68,7 +68,7 @@ public class BoundaryEventJobIntentService extends JobIntentService {
         Intent headlessBoundaryIntent = new Intent(context, BoundaryEventHeadlessTaskService.class);
         headlessBoundaryIntent.putExtras(bundle);
 
-        context.startService(headlessBoundaryIntent);
+        context.startForegroundService(headlessBoundaryIntent);
         HeadlessJsTaskService.acquireWakeLockNow(context);
     }
 }

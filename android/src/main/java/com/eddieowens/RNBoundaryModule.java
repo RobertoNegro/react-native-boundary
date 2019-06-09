@@ -1,7 +1,9 @@
 package com.eddieowens;
 
 import android.Manifest;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
@@ -9,6 +11,7 @@ import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
 import com.eddieowens.receivers.BoundaryEventBroadcastReceiver;
+import com.eddieowens.services.BoundaryEventHeadlessTaskService;
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.LifecycleEventListener;
 import com.facebook.react.bridge.Promise;
@@ -43,6 +46,13 @@ public class RNBoundaryModule extends ReactContextBaseJavaModule implements Life
         super(reactContext);
         this.mGeofencingClient = LocationServices.getGeofencingClient(getReactApplicationContext());
         getReactApplicationContext().addLifecycleEventListener(this);
+    }
+
+    @ReactMethod
+    public void removeNotification() {
+        NotificationManager notificationManager = (NotificationManager) getReactApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        if(notificationManager != null)
+            notificationManager.cancelAll();
     }
 
     @ReactMethod
@@ -226,7 +236,7 @@ public class RNBoundaryModule extends ReactContextBaseJavaModule implements Life
     }
 
     private int requestPermissions() {
-        ActivityCompat.requestPermissions(getReactApplicationContext().getCurrentActivity(),
+        ActivityCompat.requestPermissions(getCurrentActivity(),
                 new String[]{
                         Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.ACCESS_COARSE_LOCATION
