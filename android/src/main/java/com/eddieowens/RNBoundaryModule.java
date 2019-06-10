@@ -50,9 +50,10 @@ public class RNBoundaryModule extends ReactContextBaseJavaModule implements Life
 
 
     @ReactMethod
-    public void removeNotification() {
+    public void removeNotification(final Promise promise) {
         NotificationManager notificationManager = (NotificationManager) getReactApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancel(BoundaryEventHeadlessTaskService.NOTIFICATION_ID);
+        promise.resolve(null);
     }
 
     @ReactMethod

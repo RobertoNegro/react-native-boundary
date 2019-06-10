@@ -25,6 +25,7 @@ AppRegistry.registerHeadlessTask('OnBoundaryEvent', () => HeadlessBoundaryEventT
 export default {
   removeNotification: () => {
     if (Platform.OS === 'android') return RNBoundary.removeNotification();
+    else return new Promise((resolve, reject) => { resolve(); });
   },
 
   add: boundary => {
