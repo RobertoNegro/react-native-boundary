@@ -69,7 +69,10 @@ public class BoundaryEventHeadlessTaskService extends HeadlessJsTaskService {
         launchIntent.putExtra("notificationPlaceId", placeId);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, launchIntent, 0);
 
+        int iconResource = getResources().getIdentifier("ic_launcher", "mipmap", getPackageName());
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(iconResource)
                 .setContentTitle("Luogo nelle vicinanze")
                 .setContentText(placeName + " nelle vicinanze")
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
