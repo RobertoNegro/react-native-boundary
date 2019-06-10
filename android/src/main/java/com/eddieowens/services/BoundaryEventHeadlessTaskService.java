@@ -1,9 +1,11 @@
 package com.eddieowens.services;
 
+import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
@@ -12,10 +14,14 @@ import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
+import android.util.Log;
 
 import com.facebook.react.HeadlessJsTaskService;
 import com.facebook.react.jstasks.HeadlessJsTaskConfig;
 import com.facebook.react.bridge.Arguments;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class BoundaryEventHeadlessTaskService extends HeadlessJsTaskService {
     private static final int ID_SERVICE = 101;
@@ -53,37 +59,67 @@ public class BoundaryEventHeadlessTaskService extends HeadlessJsTaskService {
     protected HeadlessJsTaskConfig getTaskConfig(Intent intent) {
         Bundle extras = intent.getExtras();
 
-        String placeName = "Rilevato luogo d'interesse";
-        if(extras != null && extras.containsKey("name"))
-            placeName = extras.getString("name");
+        if (!applicationIsRunning(this)) {
+            String placeId = null;
+            if (extras != null && extras.containsKey("ids")) {
+                ArrayList<String> ids = extras.getStringArrayList("ids");
+                if (ids.size() > 0)
+                    placeId = ids.get(0);
+            }
 
-        String placeId = "";
-        if(extras != null && extras.containsKey("id"))
-            placeId = extras.getString("id");
+            if (placeId != null) {
+                NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                String packageName = getApplicationContext().getPackageName();
+                Intent launchIntent = getPackageManager().getLaunchIntentForPackage(packageName);
+                launchIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                launchIntent.putExtra("notificationPlaceId", placeId);
+                PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, launchIntent, 0);
 
-        String packageName = getApplicationContext().getPackageName();
-        Intent launchIntent = getPackageManager().getLaunchIntentForPackage(packageName);
-        launchIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        launchIntent.putExtra("notificationPlaceId", placeId);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, launchIntent, 0);
+                int iconResource = getResources().getIdentifier("ic_launcher", "mipmap", getPackageName());
 
-        int iconResource = getResources().getIdentifier("ic_launcher", "mipmap", getPackageName());
-
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-                .setSmallIcon(iconResource)
-                .setContentTitle("Luogo nelle vicinanze")
-                .setContentText(placeName + " nelle vicinanze")
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setContentIntent(pendingIntent)
-                .setAutoCancel(true);
-        notificationManager.notify(NOTIFICATION_ID, builder.build());
-
+                NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(iconResource)
+                        .setContentTitle("Luogo nelle vicinanze")
+                        .setContentText("Rilevato luogo d'interesse nelle vicinanze")
+                        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                        .setContentIntent(pendingIntent)
+                        .setAutoCancel(true);
+                notificationManager.notify(NOTIFICATION_ID, builder.build());
+            }
+        }
+        
         return new HeadlessJsTaskConfig(
                 "OnBoundaryEvent",
                 extras != null ? Arguments.fromBundle(extras) : null,
                 5000,
                 true);
+
+    }
+
+    private boolean applicationIsRunning(Context context) {
+        ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT_WATCH) {
+            List<ActivityManager.RunningAppProcessInfo> processInfos = activityManager.getRunningAppProcesses();
+            for (ActivityManager.RunningAppProcessInfo processInfo : processInfos) {
+                if (processInfo.processName.equals(context.getApplicationContext().getPackageName())) {
+                    if (processInfo.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+                        for (String d : processInfo.pkgList) {
+                            Log.v("ReactSystemNotification", "NotificationEventReceiver: ok: " + d);
+                            return true;
+                        }
+                    }
+                }
+            }
+        } else {
+            List<ActivityManager.RunningTaskInfo> taskInfo = activityManager.getRunningTasks(1);
+            ComponentName componentInfo = taskInfo.get(0).topActivity;
+            if (componentInfo.getPackageName().equals(context.getPackageName())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
