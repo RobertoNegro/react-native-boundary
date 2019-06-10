@@ -1,4 +1,4 @@
-import {NativeEventEmitter, NativeModules, AppRegistry} from 'react-native';
+import {Platform, NativeEventEmitter, NativeModules, AppRegistry} from 'react-native';
 
 const {RNBoundary} = NativeModules;
 
@@ -23,6 +23,10 @@ const HeadlessBoundaryEventTask = async ({event, ids}) => {
 AppRegistry.registerHeadlessTask('OnBoundaryEvent', () => HeadlessBoundaryEventTask);
 
 export default {
+  removeNotification: () => {
+    if (Platform.OS === 'android') return RNBoundary.removeNotification();
+  },
+
   add: boundary => {
     if (!boundary || (boundary.constructor !== Array && typeof boundary !== 'object')) {
       throw TAG + ': a boundary must be an array or non-null object';
