@@ -3,6 +3,7 @@ package com.eddieowens.services;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
@@ -10,6 +11,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 
 import com.facebook.react.HeadlessJsTaskService;
 import com.facebook.react.jstasks.HeadlessJsTaskConfig;
@@ -18,6 +20,7 @@ import com.facebook.react.bridge.Arguments;
 public class BoundaryEventHeadlessTaskService extends HeadlessJsTaskService {
     private static final int ID_SERVICE = 101;
     public static final String NOTIFICATION_CHANNEL_ID = "boundary_notification";
+    public static final int NOTIFICATION_ID = 1;
 
     @Override
     public void onCreate() {
@@ -49,6 +52,31 @@ public class BoundaryEventHeadlessTaskService extends HeadlessJsTaskService {
     @Nullable
     protected HeadlessJsTaskConfig getTaskConfig(Intent intent) {
         Bundle extras = intent.getExtras();
+
+        String placeName = "Rilevato luogo d'interesse";
+        if(extras != null && extras.containsKey("name"))
+            placeName = extras.getString("name");
+
+        String placeId = "";
+        if(extras != null && extras.containsKey("id"))
+            placeId = extras.getString("id");
+
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        String packageName = getApplicationContext().getPackageName();
+        Intent launchIntent = getPackageManager().getLaunchIntentForPackage(packageName);
+        launchIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        launchIntent.putExtra("notificationPlaceId", placeId);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, launchIntent, 0);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+                .setContentTitle("Luogo nelle vicinanze")
+                .setContentText(placeName + " nelle vicinanze")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true);
+        notificationManager.notify(NOTIFICATION_ID, builder.build());
+
         return new HeadlessJsTaskConfig(
                 "OnBoundaryEvent",
                 extras != null ? Arguments.fromBundle(extras) : null,

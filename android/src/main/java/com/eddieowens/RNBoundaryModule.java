@@ -49,13 +49,6 @@ public class RNBoundaryModule extends ReactContextBaseJavaModule implements Life
     }
 
     @ReactMethod
-    public void removeNotification() {
-        NotificationManager notificationManager = (NotificationManager) getReactApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-        if(notificationManager != null)
-            notificationManager.cancelAll();
-    }
-
-    @ReactMethod
     public void removeAll(final Promise promise) {
         mGeofencingClient.removeGeofences(getBoundaryPendingIntent())
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
