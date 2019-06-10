@@ -76,6 +76,8 @@ public class BoundaryEventHeadlessTaskService extends HeadlessJsTaskService {
         if (placeId != null && event != null && event.equals("onEnter")) {
             NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
+            notificationManager.cancel(NOTIFICATION_ID);
+
             String packageName = getApplicationContext().getPackageName();
             Intent launchIntent = getPackageManager().getLaunchIntentForPackage(packageName);
             launchIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -91,6 +93,7 @@ public class BoundaryEventHeadlessTaskService extends HeadlessJsTaskService {
                     .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                     .setContentIntent(pendingIntent)
                     .setAutoCancel(true);
+
             notificationManager.notify(NOTIFICATION_ID, builder.build());
         }
 
