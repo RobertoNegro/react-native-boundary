@@ -59,67 +59,45 @@ public class BoundaryEventHeadlessTaskService extends HeadlessJsTaskService {
     protected HeadlessJsTaskConfig getTaskConfig(Intent intent) {
         Bundle extras = intent.getExtras();
 
-        if (!applicationIsRunning(this)) {
-            String placeId = null;
-            if (extras != null && extras.containsKey("ids")) {
-                ArrayList<String> ids = extras.getStringArrayList("ids");
-                if (ids.size() > 0)
-                    placeId = ids.get(0);
-            }
-
-            if (placeId != null) {
-                NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-                String packageName = getApplicationContext().getPackageName();
-                Intent launchIntent = getPackageManager().getLaunchIntentForPackage(packageName);
-                launchIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                launchIntent.putExtra("notificationPlaceId", placeId);
-                PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, launchIntent, 0);
-
-                int iconResource = getResources().getIdentifier("ic_launcher", "mipmap", getPackageName());
-
-                NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-                        .setSmallIcon(iconResource)
-                        .setContentTitle("Luogo nelle vicinanze")
-                        .setContentText("Rilevato luogo d'interesse nelle vicinanze")
-                        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                        .setContentIntent(pendingIntent)
-                        .setAutoCancel(true);
-                notificationManager.notify(NOTIFICATION_ID, builder.build());
-            }
+        String placeId = null;
+        if (extras != null && extras.containsKey("ids")) {
+            ArrayList<String> ids = extras.getStringArrayList("ids");
+            if (ids.size() > 0)
+                placeId = ids.get(0);
         }
-        
+
+        String event = null;
+        if (extras != null && extras.containsKey("event")) {
+            event = extras.getString("event");
+        }
+
+        Log.i("Boundary", "getTaskConfig - Place ID: " + placeId + " - Event: " + event);
+
+        if (placeId != null && event != null && event.equals("onEnter")) {
+            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+            String packageName = getApplicationContext().getPackageName();
+            Intent launchIntent = getPackageManager().getLaunchIntentForPackage(packageName);
+            launchIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            launchIntent.putExtra("notificationPlaceId", placeId);
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, launchIntent, 0);
+
+            int iconResource = getResources().getIdentifier("ic_launcher", "mipmap", getPackageName());
+
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+                    .setSmallIcon(iconResource)
+                    .setContentTitle("Luogo nelle vicinanze")
+                    .setContentText("Rilevato luogo d'interesse nelle vicinanze")
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setContentIntent(pendingIntent)
+                    .setAutoCancel(true);
+            notificationManager.notify(NOTIFICATION_ID, builder.build());
+        }
+
         return new HeadlessJsTaskConfig(
                 "OnBoundaryEvent",
                 extras != null ? Arguments.fromBundle(extras) : null,
                 5000,
                 true);
-
-    }
-
-    private boolean applicationIsRunning(Context context) {
-        ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT_WATCH) {
-            List<ActivityManager.RunningAppProcessInfo> processInfos = activityManager.getRunningAppProcesses();
-            for (ActivityManager.RunningAppProcessInfo processInfo : processInfos) {
-                if (processInfo.processName.equals(context.getApplicationContext().getPackageName())) {
-                    if (processInfo.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
-                        for (String d : processInfo.pkgList) {
-                            Log.v("ReactSystemNotification", "NotificationEventReceiver: ok: " + d);
-                            return true;
-                        }
-                    }
-                }
-            }
-        } else {
-            List<ActivityManager.RunningTaskInfo> taskInfo = activityManager.getRunningTasks(1);
-            ComponentName componentInfo = taskInfo.get(0).topActivity;
-            if (componentInfo.getPackageName().equals(context.getPackageName())) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }
