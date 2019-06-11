@@ -33,7 +33,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class RNBoundaryModule extends ReactContextBaseJavaModule implements LifecycleEventListener {
-
     public static final String TAG = "RNBoundary";
     public static final String ON_ENTER = "onEnter";
     public static final String ON_EXIT = "onExit";
@@ -41,18 +40,19 @@ public class RNBoundaryModule extends ReactContextBaseJavaModule implements Life
 
     private GeofencingClient mGeofencingClient;
     private PendingIntent mBoundaryPendingIntent;
+    private NotificationManager mNotificationManager;
 
     RNBoundaryModule(ReactApplicationContext reactContext) {
         super(reactContext);
         this.mGeofencingClient = LocationServices.getGeofencingClient(getReactApplicationContext());
         getReactApplicationContext().addLifecycleEventListener(this);
+        mNotificationManager = (NotificationManager) getReactApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
     }
 
 
     @ReactMethod
     public void removeNotification(final Promise promise) {
-        NotificationManager notificationManager = (NotificationManager) getReactApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.cancel(BoundaryEventHeadlessTaskService.NOTIFICATION_ID);
+        mNotificationManager.cancel(BoundaryEventHeadlessTaskService.NOTIFICATION_ID);
         promise.resolve(null);
     }
 

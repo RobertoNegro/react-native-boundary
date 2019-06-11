@@ -28,12 +28,16 @@ public class BoundaryEventHeadlessTaskService extends HeadlessJsTaskService {
     public static final String NOTIFICATION_CHANNEL_ID = "boundary_notification";
     public static final int NOTIFICATION_ID = 1;
 
+
+    private NotificationManager mNotificationManager;
+
     @Override
     public void onCreate() {
         super.onCreate();
 
-        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        String channelId = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? createNotificationChannel(notificationManager) : "";
+        mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        String channelId = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ? createNotificationChannel(mNotificationManager) : "";
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, channelId);
         Notification notification = notificationBuilder.setOngoing(true)
                 .setPriority(NotificationCompat.PRIORITY_MIN)
@@ -74,9 +78,7 @@ public class BoundaryEventHeadlessTaskService extends HeadlessJsTaskService {
         Log.i("Boundary", "getTaskConfig - Place ID: " + placeId + " - Event: " + event);
 
         if (placeId != null && event != null && event.equals("onEnter")) {
-            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-            notificationManager.cancel(NOTIFICATION_ID);
+            mNotificationManager.cancel(NOTIFICATION_ID);
 
             String packageName = getApplicationContext().getPackageName();
             Intent launchIntent = getPackageManager().getLaunchIntentForPackage(packageName);
@@ -94,7 +96,7 @@ public class BoundaryEventHeadlessTaskService extends HeadlessJsTaskService {
                     .setContentIntent(pendingIntent)
                     .setAutoCancel(true);
 
-            notificationManager.notify(NOTIFICATION_ID, builder.build());
+            mNotificationManager.notify(NOTIFICATION_ID, builder.build());
         }
 
         return new HeadlessJsTaskConfig(
